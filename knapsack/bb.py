@@ -16,6 +16,10 @@ class Node:
 		self.parent = parent
 		self.child = child
 		self.taken = taken
+	def get_child(self):
+		return self.child
+	def get_parent(self):
+		return self.parent
 
 def bb(item_count, capacity, items):
 # items.sort(key=lambda x:x.density, reverse=True)
