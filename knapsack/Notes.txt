@@ -1,0 +1,11 @@
+Notes
+
+For the case with 19 items
+
+branch-and-bound using depth first and a relaxation that looks at the highest possible value by sorting by value solves in 10103 cycles
+
+branch-and-bound sorting by density and relaxing the discrete requirement solves in 4175 cycles
+
+branch-and-bound sorting by density and relaxing the discrete requirement, and doing best first solves in 4726 cycles
+
+branch-and-bound sorting by density and relaxing the discrete requirement, with bug fixed solves in 359

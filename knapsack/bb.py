@@ -29,6 +29,7 @@ fxns:
         return parent of this node
 
 """
+test_vals = []
 
 class Node:
     def __init__(self, parent, value, weight, depth, taken, idx):
@@ -55,11 +56,12 @@ def calculate_max(items, capacity, value, weight):
     estimate = value
     current_weight = weight
     for i in range(len(items)):
-        if current_weight+items[i][2] < capacity:
+        if current_weight + items[i][2] < capacity:
             estimate += items[i][1]
             current_weight += items[i][2]
         else:
-            estimate += items[i][1] * ((capacity-current_weight) / items[i][2])
+            estimate += int(items[i][1] * ((capacity-current_weight) / items[i][2]))
+            current_weight = capacity
         if current_weight >= capacity:
             return estimate
     return estimate
@@ -68,7 +70,6 @@ def calculate_max(items, capacity, value, weight):
 def bb(item_count, capacity, items):
 
     to_analyze = []
-    # items.sort(key=lambda x:x.value, reverse=True)
     items.sort(key=lambda x : x.density, reverse=True)
     a = Node(None, items[0][1], items[0][2], 0, 1, items[0][0])
     a.estimate = calculate_max(items, capacity, 0, 0)
@@ -78,26 +79,23 @@ def bb(item_count, capacity, items):
     to_analyze.append(a)
 
     best_node = Node(None, 0, 0, 0, 0, 0)
-
+    # count = 0
     while to_analyze:
         _item = to_analyze.pop()
-        # if _item.depth == 3 and _item.parent.taken == 0:
-        #     pdb.set_trace()
         if _item.estimate < best_node.value:
             continue
         if _item.weight > capacity:
             continue
-
+        # count += 1
         if _item.depth<item_count-1:
             _item_child_a, _item_child_b = _item.get_children(items)
             _item_child_b.estimate = calculate_max(items[_item.depth+2:], capacity, _item.value, _item.weight)
             _item_child_a.estimate = _item.estimate
-            to_analyze.append(_item_child_a)
             to_analyze.append(_item_child_b)
-
-        if _item.value > best_node.value:
-            # pdb.set_trace()
-            best_node = _item
+            to_analyze.append(_item_child_a)
+        if _item.depth == item_count - 1:
+            if _item.value > best_node.value:
+                best_node = _item
 
     taken = [0]*item_count
     _temp = best_node
@@ -106,5 +104,7 @@ def bb(item_count, capacity, items):
             taken[_temp.idx] = 1
         _temp = _temp.parent
 
-    return int(best_node.value), best_node.weight, taken
 
+    # print(count)
+
+    return int(best_node.value), best_node.weight, taken
