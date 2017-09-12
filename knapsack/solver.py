@@ -6,6 +6,7 @@ Item = namedtuple("Item", ['index', 'value', 'weight', 'density'])
 
 from greedy_sol import greedy
 from dynamic import dynamic
+from bb import bb
 
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
@@ -24,7 +25,9 @@ def solve_it(input_data):
         parts = line.split()
         items.append(Item(i-1, int(parts[0]), int(parts[1]), (float(parts[0])/float(parts[1]))))
     
-    value, weight, taken = dynamic(item_count, capacity, items)
+    value, weight, taken = bb(item_count, capacity, items)
+    # value, weight, taken = dynamic(item_count, capacity, items)
+
     
     # prepare the solution in the specified output format
     output_data = str(value) + ' ' + str(1) + '\n'

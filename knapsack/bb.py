@@ -9,62 +9,102 @@ v_i: value of item i
 Sort values by values density: v_i/w_i
 """
 import numpy as np
-#Item = namedtuple("Item", ['index', 'value', 'weight', 'density'])
+import pdb
+# Item = namedtuple("Item", ['index', 'value', 'weight', 'density'])
+
+"""
+Class to act as nodes of tree for branch and bound algorithm
+variables:
+    parent: node before this one
+    value: total value of node
+    weight: total weight of node
+    depth: how far down the tree, starting at 0
+    taken: whether this node includes the item of this depth
+fxns:
+    get_children:
+        generates the children nodes of this node.
+        One child will involve excluding an item, and the other
+        child will involve including an item 
+    get_parent:
+        return parent of this node
+
+"""
 
 class Node:
-	def __init__(self, parent, child, taken):
-		self.parent = parent
-		self.child = child
-		self.taken = taken
-	def get_child(self):
-		return self.child
-	def get_parent(self):
-		return self.parent
+    def __init__(self, parent, value, weight, depth, taken, idx):
+        self.parent = parent
+        if parent is not None:
+            self.value = parent.value + value * taken
+            self.weight = parent.weight + weight * taken
+        else:
+            self.value = value * taken
+            self.weight = weight * taken
+        self.depth = depth
+        self.taken = taken
+        self.idx = idx
+
+    def get_children(self, items):
+        a = Node(self, items[self.depth + 1][1], items[self.depth + 1][2], self.depth + 1, 1, items[self.depth+1][0])
+        b = Node(self, items[self.depth + 1][1], items[self.depth + 1][2], self.depth + 1, 0, items[self.depth+1][0])
+        return a, b
+
+    def get_parent(self):
+        return self.parent
+
+def calculate_max(items, capacity, value, weight):
+    estimate = value
+    current_weight = weight
+    for i in range(len(items)):
+        if current_weight+items[i][2] < capacity:
+            estimate += items[i][1]
+            current_weight += items[i][2]
+        else:
+            estimate += items[i][1] * ((capacity-current_weight) / items[i][2])
+        if current_weight >= capacity:
+            return estimate
+    return estimate
+
 
 def bb(item_count, capacity, items):
-# items.sort(key=lambda x:x.density, reverse=True)
-	to_analyze.append(Node(None, items[1], 0))
-	to_analyze.append(Node(None, items[1], 1))
 
-	while to_analyze:
+    to_analyze = []
+    # items.sort(key=lambda x:x.value, reverse=True)
+    items.sort(key=lambda x : x.density, reverse=True)
+    a = Node(None, items[0][1], items[0][2], 0, 1, items[0][0])
+    a.estimate = calculate_max(items, capacity, 0, 0)
+    b = Node(None, 0, 0, 0, 0, items[0][0])
+    b.estimate = calculate_max(items[1:], capacity, 0, 0)
+    to_analyze.append(b)
+    to_analyze.append(a)
 
+    best_node = Node(None, 0, 0, 0, 0, 0)
 
+    while to_analyze:
+        _item = to_analyze.pop()
+        # if _item.depth == 3 and _item.parent.taken == 0:
+        #     pdb.set_trace()
+        if _item.estimate < best_node.value:
+            continue
+        if _item.weight > capacity:
+            continue
 
-	to_analyze = []
-	being_analyzed = []
+        if _item.depth<item_count-1:
+            _item_child_a, _item_child_b = _item.get_children(items)
+            _item_child_b.estimate = calculate_max(items[_item.depth+2:], capacity, _item.value, _item.weight)
+            _item_child_a.estimate = _item.estimate
+            to_analyze.append(_item_child_a)
+            to_analyze.append(_item_child_b)
 
+        if _item.value > best_node.value:
+            # pdb.set_trace()
+            best_node = _item
 
+    taken = [0]*item_count
+    _temp = best_node
+    for i in range(_temp.depth+1):
+        if _temp.taken == 1:
+            taken[_temp.idx] = 1
+        _temp = _temp.parent
 
-	table = np.zeros((capacity + 1, item_count + 1))
-
-	for col in range(1, item_count + 1):
-		val = items[col-1].value
-		wht = items[col-1].weight
-		for row in range(1, capacity + 1):
-			if row<wht:
-				table[row][col]=table[row][col-1]
-			else:
-				table[row][col]=max(val+table[row-wht][col-1], table[row][col-1])
-
-	sum = table[capacity][item_count]
-
-	row = capacity
-	col = item_count
-	val = table[row][col]
-
-	value = val
-	weight = -1
-	taken = [0]*item_count
-
-	while col>0:
-		if table[row][col]!=table[row][col-1]:
-			taken[col-1]=1
-			row -= items[col-1].weight
-			col -= 1
-		else:
-			col -= 1
-
-	return int(value), weight, taken
-
-
+    return int(best_node.value), best_node.weight, taken
 
